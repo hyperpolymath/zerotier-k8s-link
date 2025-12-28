@@ -1,0 +1,184 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Hyperpolymath <hyperpolymath@proton.me>
+= zerotier-k8s-link
+:icons: font
+:toc: left
+:toclevels: 3
+
+== Purpose
+
+Join Kubernetes nodes to a ZeroTier network and configure encrypted overlay routing.
+
+Part of the link:https://github.com/hyperpolymath/flatracoon-netstack[FlatRacoon Network Stack].
+
+== Architecture
+
+[source]
+----
+                    ┌─────────────────────┐
+                    │  ZeroTier Central   │
+                    │   (Controller)      │
+                    └──────────┬──────────┘
+                               │
+       ┌───────────────────────┼───────────────────────┐
+       │                       │                       │
+┌──────▼──────┐         ┌──────▼──────┐         ┌──────▼──────┐
+│   Node 1    │◄───────►│   Node 2    │◄───────►│   Node 3    │
+│  ZT Agent   │  mesh   │  ZT Agent   │  mesh   │  ZT Agent   │
+└──────┬──────┘         └──────┬──────┘         └──────┬──────┘
+       │                       │                       │
+       └───────────────────────┼───────────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │   IPFS / Services   │
+                    │  (overlay routed)   │
+                    └─────────────────────┘
+----
+
+== Components
+
+* **Node join scripts** - DaemonSet-based ZeroTier agent deployment
+* **Routing table definitions** - Declarative route configuration
+* **Firewall and policy notes** - iptables/nftables rules
+* **Integration points** - Twingate and IPFS bridging
+
+== Directory Structure
+
+[source]
+----
+zerotier-k8s-link/
+├── manifests/
+│   ├── daemonset.yaml       # ZeroTier agent per node
+│   ├── configmap.yaml       # Network configuration
+│   ├── secret.yaml          # Network ID and tokens
+│   └── networkpolicy.yaml   # Pod communication rules
+├── scripts/
+│   ├── join-network.sh      # Node join automation
+│   ├── configure-routes.sh  # Route table setup
+│   └── health-check.sh      # Connectivity verification
+├── configs/
+│   ├── network.ncl          # Nickel network definition
+│   ├── routes.ncl           # Route table configuration
+│   └── firewall.ncl         # Firewall rules
+├── Justfile
+├── README.adoc
+├── STATE.scm
+├── META.scm
+└── ECOSYSTEM.scm
+----
+
+== Inputs
+
+[cols="1,2,1"]
+|===
+| Input | Description | Source
+
+| `ZEROTIER_NETWORK_ID`
+| 16-character network identifier
+| ZeroTier Central
+
+| `ZEROTIER_API_TOKEN`
+| Central API access token
+| poly-secret-mcp / Vault
+
+| Node join tokens
+| Per-node authorization
+| Generated via API
+
+| Route definitions
+| Overlay routing rules
+| configs/routes.ncl
+|===
+
+== Outputs
+
+[cols="1,2"]
+|===
+| Output | Description
+
+| Encrypted overlay mesh
+| All nodes connected via ZeroTier
+
+| Routable private network
+| 10.x.x.x or fd00::/8 addressing
+
+| Peer discovery
+| Automatic node discovery and NAT traversal
+
+| Health metrics
+| Connectivity and latency metrics
+|===
+
+== Integration Points
+
+=== With FlatRacoon Stack
+
+* **twingate-helm-deploy** - External access routes through Twingate
+* **ipfs-overlay** - IPFS binds exclusively to ZeroTier interface
+* **poly-observability-mcp** - Mesh health monitoring
+
+=== Machine-Readable Manifest
+
+[source,json]
+----
+{
+  "module": "zerotier-k8s-link",
+  "version": "0.1.0",
+  "layer": "overlay",
+  "requires": ["kubernetes", "zerotier-central"],
+  "provides": ["encrypted-mesh", "private-routing", "nat-traversal"],
+  "config_schema": "configs/schema.ncl",
+  "health_endpoint": "/zerotier/health",
+  "metrics_endpoint": "/zerotier/metrics"
+}
+----
+
+== Quick Start
+
+[source,bash]
+----
+# 1. Set network credentials
+export ZEROTIER_NETWORK_ID="..."
+export ZEROTIER_API_TOKEN="..."
+
+# 2. Deploy DaemonSet
+just deploy
+
+# 3. Authorize nodes in ZeroTier Central (or via API)
+just authorize-nodes
+
+# 4. Verify mesh connectivity
+just mesh-status
+----
+
+== Network Topology
+
+=== IPv4 Overlay
+[source]
+----
+10.147.17.0/24    # Example ZeroTier managed range
+├── 10.147.17.1   # Node 1
+├── 10.147.17.2   # Node 2
+├── 10.147.17.3   # Node 3
+└── 10.147.17.10+ # IPFS nodes
+----
+
+=== IPv6 Overlay
+[source]
+----
+fd00:feed:face::/48   # Private IPv6 space
+├── fd00:feed:face::1 # Node 1
+├── fd00:feed:face::2 # Node 2
+└── fd00:feed:face::3 # Node 3
+----
+
+== Status
+
+[horizontal]
+Phase:: Scaffolding
+Completion:: 10%
+Next:: DaemonSet implementation and route automation
+
+== License
+
+AGPL-3.0-or-later
