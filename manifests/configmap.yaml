@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# SPDX-FileCopyrightText: 2025 Hyperpolymath
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zerotier-config
+  namespace: zerotier-system
+data:
+  # Network configuration
+  auto-join: "true"
+  # Enable IPv6 support
+  enable-ipv6: "true"
+  # Routing configuration
+  allow-default: "false"
+  allow-global: "false"
+  allow-managed: "true"
+  # Health check configuration
+  health-check-interval: "30"
+  health-check-timeout: "10"
