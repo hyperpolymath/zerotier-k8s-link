@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: PMPL-1.0
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: zerotier
+  namespace: zerotier-system
+  labels:
+    app.kubernetes.io/name: zerotier
+    app.kubernetes.io/component: overlay-network
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: zerotier
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zerotier-metrics
+  namespace: zerotier-system
+  labels:
+    app.kubernetes.io/name: zerotier
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: zerotier
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+      protocol: TCP

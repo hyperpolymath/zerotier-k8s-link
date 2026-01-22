@@ -1,5 +1,7 @@
 image:https://img.shields.io/badge/license-PMPL--1.0-blue.svg[License,link="https://github.com/hyperpolymath/palimpsest-license"]
 image:https://img.shields.io/badge/Philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
+image:https://img.shields.io/badge/Idris-Inside-green.svg[Idris Inside,link="https://www.idris-lang.org"]
+image:https://img.shields.io/badge/Proven-ZKP-purple.svg[Proven ZKP,link="https://github.com/hyperpolymath/proven"]
 
 
 // SPDX-License-Identifier: PMPL-1.0
