@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# SPDX-FileCopyrightText: 2025 Hyperpolymath
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zerotier-system
+  labels:
+    app.kubernetes.io/name: zerotier
+    app.kubernetes.io/part-of: flatracoon-netstack
