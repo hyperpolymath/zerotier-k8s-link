@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# SPDX-FileCopyrightText: 2025 Hyperpolymath
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: zerotier-system-policy
+  namespace: zerotier-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: zerotier
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow health checks from kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: TCP
+      port: 9993
+  # Allow ZeroTier mesh traffic
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: UDP
+      port: 9993
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow ZeroTier Central communication
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: UDP
+      port: 9993
+  # Allow mesh communication
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: UDP
+      port: 9993
