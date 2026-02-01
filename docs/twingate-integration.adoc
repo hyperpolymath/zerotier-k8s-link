@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0
+// SPDX-License-Identifier: PMPL-1.0-or-later
 = Twingate Integration Guide
 
 This guide explains how to integrate ZeroTier K8s Link with Twingate for layered secure access.

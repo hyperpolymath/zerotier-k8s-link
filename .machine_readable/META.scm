@@ -1,4 +1,4 @@
-;; SPDX-License-Identifier: AGPL-3.0-or-later
+;; SPDX-License-Identifier: PMPL-1.0-or-later
 ;; META.scm - Meta-level information for zerotier-k8s-link
 ;; Media-Type: application/meta+scheme
 

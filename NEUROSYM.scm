@@ -1,4 +1,4 @@
-;; SPDX-License-Identifier: PMPL-1.0
+;; SPDX-License-Identifier: PMPL-1.0-or-later
 ;; NEUROSYM.scm - Neurosymbolic integration config
 
 (define neurosym-config
