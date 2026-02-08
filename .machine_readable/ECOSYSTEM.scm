@@ -1,20 +1,8 @@
 ;; SPDX-License-Identifier: PMPL-1.0-or-later
-;; ECOSYSTEM.scm - Ecosystem position for zerotier-k8s-link
-;; Media-Type: application/vnd.ecosystem+scm
-
-(ecosystem
-  (version "1.0")
-  (name "zerotier-k8s-link")
-  (type "")
-  (purpose "")
-
-  (position-in-ecosystem
-    (category "")
-    (subcategory "")
-    (unique-value ()))
-
-  (related-projects ())
-
-  (what-this-is ())
-
-  (what-this-is-not ()))
+(ecosystem (metadata (version "0.2.0") (last-updated "2026-02-08"))
+  (project (name "zerotier-k8s-link") (purpose "ZeroTier overlay network for Kubernetes nodes") (role overlay-mesh))
+  (flatracoon-integration
+    (parent "flatracoon/netstack")
+    (layer overlay)
+    (depended-on-by ("ipfs-overlay"))
+    (depends-on ())))
