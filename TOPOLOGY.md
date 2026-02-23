@@ -1,0 +1,90 @@
+<!-- SPDX-License-Identifier: PMPL-1.0-or-later -->
+<!-- TOPOLOGY.md — Project architecture map and completion dashboard -->
+<!-- Last updated: 2026-02-19 -->
+
+# zerotier-k8s-link — Project Topology
+
+## System Architecture
+
+```
+                        ┌─────────────────────────────────────────┐
+                        │              ZEROTIER CENTRAL           │
+                        │        (Network Controller / API)       │
+                        └───────────────────┬─────────────────────┘
+                                            │ Auth / Config
+                                            ▼
+                        ┌─────────────────────────────────────────┐
+                        │           ZEROTIER MESH OVERLAY         │
+                        │    (Encrypted Peer-to-Peer Network)     │
+                        └──────────┬───────────────────┬──────────┘
+                                   │                   │
+                                   ▼                   ▼
+                        ┌───────────────────────┐  ┌────────────────────────────────┐
+                        │  KUBERNETES CLUSTER   │  │  NETWORK AGENTS                │
+                        │ - DaemonSet (per node)│  │ - ZeroTier-one                 │
+                        │ - ConfigMaps / Secrets│  │ - Virtual Interface (zt0)      │
+                        │ - NetworkPolicies     │  │ - Private IPv4/IPv6 Routing    │
+                        └──────────┬────────────┘  └──────────┬─────────────────────┘
+                                   │                          │
+                                   └────────────┬─────────────┘
+                                                ▼
+                        ┌─────────────────────────────────────────┐
+                        │           OVERLAY SERVICES              │
+                        │  ┌───────────┐  ┌───────────┐  ┌───────┐│
+                        │  │ IPFS      │  │ App Nodes │  │ Twin- ││
+                        │  │ Nodes     │  │           │  │ gate  ││
+                        │  └───────────┘  └───────────┘  └───────┘│
+                        └─────────────────────────────────────────┘
+
+                        ┌─────────────────────────────────────────┐
+                        │          REPO INFRASTRUCTURE            │
+                        │  Justfile Automation  .machine_readable/  │
+                        │  Nickel configs (ncl) 0-AI-MANIFEST.a2ml  │
+                        └─────────────────────────────────────────┘
+```
+
+## Completion Dashboard
+
+```
+COMPONENT                          STATUS              NOTES
+─────────────────────────────────  ──────────────────  ─────────────────────────────────
+CORE OVERLAY
+  DaemonSet (zt-agent)              ████░░░░░░  40%    Initial pod stubs
+  Network Config (Nickel)           ██████████ 100%    Route schemas verified
+  Join Automation (Scripts)         ██████░░░░  60%    API authorization active
+  Firewall Rules (ncl)              ████████░░  80%    nftables templates stable
+
+INTEGRATIONS
+  IPFS Bridge                       ██████░░░░  60%    zt0 binding verified
+  Twingate Link                     ████░░░░░░  40%    Ingress routing prototyping
+  Health Metrics                    ██████░░░░  60%    Latency polling active
+
+REPO INFRASTRUCTURE
+  Justfile Automation               ██████████ 100%    Standard build/deploy tasks
+  .machine_readable/                ██████████ 100%    STATE tracking active
+  0-AI-MANIFEST.a2ml                ██████████ 100%    AI entry point verified
+
+─────────────────────────────────────────────────────────────────────────────
+OVERALL:                            █████░░░░░  ~50%   Scaffolding stable, Deploy maturing
+```
+
+## Key Dependencies
+
+```
+Network ID ──────► Join Script ──────► DaemonSet Pod ──────► Virtual Interface
+     │                 │                   │                    │
+     ▼                 ▼                   ▼                    ▼
+API Token ───────► Authorize ──────► Encrypted Mesh ──────► Private Route
+```
+
+## Update Protocol
+
+This file is maintained by both humans and AI agents. When updating:
+
+1. **After completing a component**: Change its bar and percentage
+2. **After adding a component**: Add a new row in the appropriate section
+3. **After architectural changes**: Update the ASCII diagram
+4. **Date**: Update the `Last updated` comment at the top of this file
+
+Progress bars use: `█` (filled) and `░` (empty), 10 characters wide.
+Percentages: 0%, 10%, 20%, ... 100% (in 10% increments).
