@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
 # SPDX-FileCopyrightText: 2025 Hyperpolymath
+#
+# DaemonSet configuration for ZeroTier One on Kubernetes.
+# This ensures a ZeroTier instance runs on every node, creating a mesh overlay.
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -18,12 +22,23 @@ spec:
       labels:
         app.kubernetes.io/name: zerotier
     spec:
+      # NETWORKING:
+      # hostNetwork: true is REQUIRED for an overlay network.
+      # It allows the pod to access the node's network stack directly,
+      # creating the 'zt*' interfaces on the host itself, not just inside the pod.
       hostNetwork: true
+      
+      # PROCESS ISOLATION:
+      # hostPID: true is needed to inspect host processes if strictly required,
+      # but often used in network tools to avoid namespace isolation issues.
       hostPID: true
+      
       initContainers:
       - name: install-zerotier
         image: alpine:3.19
         securityContext:
+          # SECURITY: Privileged access is needed to install kernel modules
+          # or modify host network settings during initialization.
           privileged: true
         command:
         - /bin/sh
@@ -32,14 +47,21 @@ spec:
           set -e
           apk add --no-cache zerotier-one
           mkdir -p /var/lib/zerotier-one
+          # Generate identity if needed
           zerotier-one -d
         volumeMounts:
         - name: zerotier-data
           mountPath: /var/lib/zerotier-one
+      
       containers:
       - name: zerotier
         image: zerotier/zerotier:latest
         securityContext:
+          # SECURITY: High privilege requirements
+          # - privileged: true: Full access to host devices.
+          # - NET_ADMIN: Modify network interfaces/routing tables.
+          # - SYS_ADMIN: Perform administration tasks.
+          # - NET_RAW: Open raw sockets.
           privileged: true
           capabilities:
             add:
@@ -47,6 +69,8 @@ spec:
             - SYS_ADMIN
             - NET_RAW
         env:
+        # CREDENTIALS:
+        # Loaded from secure Kubernetes Secrets.
         - name: ZEROTIER_NETWORK_ID
           valueFrom:
             secretKeyRef:
@@ -71,7 +95,8 @@ spec:
           echo "Starting ZeroTier One..."
           zerotier-one -d
           
-          # Wait for ZeroTier service to be ready
+          # LIVENESS CHECK LOOP
+          # Wait for ZeroTier service to be ready before proceeding
           for i in $(seq 1 30); do
             if zerotier-cli info >/dev/null 2>&1; then
               echo "ZeroTier service is ready"
@@ -81,12 +106,13 @@ spec:
             sleep 2
           done
           
-          # Join network if AUTO_JOIN is enabled
+          # AUTO-JOIN LOGIC
+          # If enabled, automatically join the configured network ID
           if [ "$AUTO_JOIN" = "true" ]; then
             echo "Joining network $ZEROTIER_NETWORK_ID..."
             zerotier-cli join "$ZEROTIER_NETWORK_ID"
             
-            # Wait for network join
+            # JOIN VERIFICATION LOOP
             for i in $(seq 1 60); do
               if zerotier-cli listnetworks | grep -q "$ZEROTIER_NETWORK_ID"; then
                 echo "Successfully joined network"
@@ -97,15 +123,20 @@ spec:
             done
           fi
           
-          # Keep container running and monitor status
+          # MAIN LOOP
+          # Keep container running and monitor status periodically
           while true; do
             zerotier-cli info
             zerotier-cli listnetworks
             sleep 60
           done
         volumeMounts:
+        # PERSISTENCE:
+        # Store identity keys on the host so they survive pod restarts.
         - name: zerotier-data
           mountPath: /var/lib/zerotier-one
+        # TUN DEVICE:
+        # Access to the Universal TUN/TAP device is required for VPN functionality.
         - name: dev-net-tun
           mountPath: /dev/net/tun
         resources:
@@ -142,6 +173,9 @@ spec:
           path: /dev/net/tun
           type: CharDevice
       tolerations:
+      # TOLERATIONS:
+      # Ensure the pod can be scheduled on master/control-plane nodes if needed,
+      # providing connectivity to the entire cluster control plane.
       - effect: NoSchedule
         operator: Exists
       - effect: NoExecute
