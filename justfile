@@ -81,3 +81,8 @@ clean:
 setup: configure-secrets deploy authorize-nodes
     @echo "✓ Setup complete. Check status with: just status"
 
+
+# [AUTO-GENERATED] Multi-arch / RISC-V target
+build-riscv:
+	@echo "Building for RISC-V..."
+	cross build --target riscv64gc-unknown-linux-gnu
