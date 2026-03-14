@@ -1,34 +1,35 @@
-= RSR-template-repo - Citation Guide
+// SPDX-License-Identifier: PMPL-1.0-or-later
+= zerotier-k8s-link - Citation Guide
 :toc:
 
 == BibTeX
 
 [source,bibtex]
 ----
-@software{rsr-template-repo_2025,
-  author = {Polymath, Hyper},
-  title = {RSR-template-repo},
+@software{zerotier-k8s-link_2025,
+  author = {Jewell, Jonathan D.A.},
+  title = {zerotier-k8s-link},
   year = {2025},
-  url = {https://github.com/hyperpolymath/RSR-template-repo},
-  license = {AGPL-3.0-or-later}
+  url = {https://github.com/hyperpolymath/zerotier-k8s-link},
+  license = {PMPL-1.0-or-later}
 }
 ----
 
 == Harvard Style
 
-Polymath, H. (2025) _RSR-template-repo_ [Computer software]. Available at: https://github.com/hyperpolymath/RSR-template-repo
+Jewell, J.D.A. (2025) _zerotier-k8s-link_ [Computer software]. Available at: https://github.com/hyperpolymath/zerotier-k8s-link
 
 == OSCOLA
 
-Hyper Polymath, 'RSR-template-repo' (2025) <https://github.com/hyperpolymath/RSR-template-repo>
+Jonathan D.A. Jewell, 'zerotier-k8s-link' (2025) <https://github.com/hyperpolymath/zerotier-k8s-link>
 
 == MLA
 
-Polymath, Hyper. "RSR-template-repo." 2025, github.com/hyperpolymath/RSR-template-repo.
+Jewell, Jonathan D.A. "zerotier-k8s-link." 2025, github.com/hyperpolymath/zerotier-k8s-link.
 
 == APA 7
 
-Polymath, H. (2025). _RSR-template-repo_ [Computer software]. GitHub. https://github.com/hyperpolymath/RSR-template-repo
+Jewell, J.D.A. (2025). _zerotier-k8s-link_ [Computer software]. GitHub. https://github.com/hyperpolymath/zerotier-k8s-link
 
 == See Also
 
