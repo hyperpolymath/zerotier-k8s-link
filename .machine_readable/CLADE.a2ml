@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Clade declaration — part of the gv-clade-index registry
+# See: https://github.com/hyperpolymath/gv-clade-index
+
+[identity]
+uuid = "ac25b1d9-d2d5-5eab-bd6c-e20c33e66633"
+primary-forge = "github"
+primary-owner = "hyperpolymath"
+canonical-name = "zerotier-k8s-link"
+prefixed-name = "ix-zerotier-k8s-link"
+
+[clade]
+primary = "ix"
+secondary = []
+assigned = "2026-03-16"
+rationale = ""
+
+[forges]
+github = "hyperpolymath/zerotier-k8s-link"
+gitlab = "hyperpolymath/zerotier-k8s-link"
+bitbucket = "hyperpolymath/zerotier-k8s-link"
+
+[lineage]
+type = "standalone"
+parent = "ZeroTier integration with Kubernetes"
+born = "2026-03-16"
