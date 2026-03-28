@@ -121,3 +121,17 @@ help-me:
     @echo "  https://github.com/hyperpolymath/zerotier-k8s-link/issues/new"
     @echo ""
     @echo "Include the output of 'just doctor' in your report."
+
+# Attempt to automatically install missing tools
+heal:
+    #!/usr/bin/env bash
+    echo "═══════════════════════════════════════════════════"
+    echo "  Zerotier K8S Link Heal — Automatic Tool Installation"
+    echo "═══════════════════════════════════════════════════"
+    echo ""
+if ! command -v just >/dev/null 2>&1; then
+    echo "Installing just..."
+    cargo install just 2>/dev/null || echo "Install just from https://just.systems"
+fi
+    echo ""
+    echo "Heal complete. Run 'just doctor' to verify."
