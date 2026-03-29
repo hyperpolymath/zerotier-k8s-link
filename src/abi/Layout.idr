@@ -6,9 +6,9 @@
 |||
 ||| @see https://en.wikipedia.org/wiki/Data_structure_alignment
 
-module {{PROJECT}}.ABI.Layout
+module ZEROTIER_K8S_LINK.ABI.Layout
 
-import {{PROJECT}}.ABI.Types
+import ZEROTIER_K8S_LINK.ABI.Types
 import Data.Vect
 import Data.So
 
