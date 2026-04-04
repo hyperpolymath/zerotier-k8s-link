@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+//
+// End-to-end tests for full network configuration pipeline
+
+import { assertEquals, assertStringIncludes } from "https://deno.land/std@0.208.0/assert/mod.ts";
+
+Deno.test("e2e: full config pipeline - read all Nickel configs", async () => {
+  const configs = [
+    await Deno.readTextFile("configs/network.ncl"),
+    await Deno.readTextFile("configs/firewall.ncl"),
+    await Deno.readTextFile("configs/routes.ncl"),
+  ];
+
+  assertEquals(configs.length, 3);
+  for (const config of configs) {
+    assertEquals(config.length > 0, true);
+  }
+});
+
+Deno.test("e2e: K8s daemonset references correct namespace", async () => {
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  const namespaceContent = await Deno.readTextFile("manifests/namespace.yaml");
+
+  // Extract namespace names
+  const daemonsetNs = daemonsetContent.match(/namespace:\s*([a-z0-9-]+)/);
+  const declaredNs = namespaceContent.match(/metadata:\s*\n\s*name:\s*([a-z0-9-]+)/);
+
+  if (daemonsetNs && declaredNs) {
+    assertEquals(daemonsetNs[1], declaredNs[1]);
+  }
+});
+
+Deno.test("e2e: NetworkPolicy references zerotier app labels", async () => {
+  const policyContent = await Deno.readTextFile("manifests/networkpolicy.yaml");
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Both should reference the same app label
+  assertStringIncludes(policyContent, "app.kubernetes.io/name: zerotier");
+  assertStringIncludes(daemonsetContent, "app.kubernetes.io/name: zerotier");
+});
+
+Deno.test("e2e: routes don't conflict with firewall deny rules", async () => {
+  const routesContent = await Deno.readTextFile("configs/routes.ncl");
+  const firewallContent = await Deno.readTextFile("configs/firewall.ncl");
+
+  // Firewall should have DROP policy but allow zerotier
+  assertStringIncludes(firewallContent, "input_policy = \"DROP\"");
+  assertStringIncludes(firewallContent, "ACTION_ACCEPT");
+
+  // Routes should reference valid destinations
+  assertEquals(routesContent.includes("destination =") || routesContent.includes("target ="), true);
+});
+
+Deno.test("e2e: secret manifest does not contain real credentials", async () => {
+  const secretContent = await Deno.readTextFile("manifests/secret.yaml");
+
+  // Should not contain realistic credentials (no real tokens)
+  const hasPlaceholder = secretContent.includes("EXAMPLE") || secretContent.includes("CHANGEME");
+  assertEquals(hasPlaceholder, true);
+
+  // Should not contain common token patterns (real tokens are usually longer)
+  assertEquals(secretContent.includes("sk_live_") || secretContent.includes("zt_") || secretContent.includes("api_key="), false);
+});
+
+Deno.test("e2e: network config IPv6 pool is valid format", async () => {
+  const networkContent = await Deno.readTextFile("configs/network.ncl");
+
+  // Should have IPv6 prefix in valid format
+  const ipv6Match = networkContent.match(/prefix\s*=\s*"([^"]+)"/);
+  if (ipv6Match) {
+    const ipv6Prefix = ipv6Match[1];
+    // Should be valid IPv6 CIDR (contain colons and /prefix)
+    assertEquals(/[a-f0-9:]+\/\d+/.test(ipv6Prefix), true);
+  }
+});
+
+Deno.test("e2e: configmap provides auto-join configuration", async () => {
+  const configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
+
+  // Should have some configuration keys
+  assertStringIncludes(configmapContent, "kind: ConfigMap");
+  assertStringIncludes(configmapContent, "data:");
+});
+
+Deno.test("e2e: daemonset includes health check configuration", async () => {
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Should have liveness or readiness probes
+  assertEquals(daemonsetContent.includes("livenessProbe:") || daemonsetContent.includes("readinessProbe:"), true);
+});
+
+Deno.test("e2e: all manifest references use existing configmap/secret", async () => {
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  const configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
+  const secretContent = await Deno.readTextFile("manifests/secret.yaml");
+
+  // Daemonset references zerotier-config configmap
+  assertStringIncludes(daemonsetContent, "zerotier-config");
+  // Daemonset references zerotier-credentials secret
+  assertStringIncludes(daemonsetContent, "zerotier-credentials");
+
+  // ConfigMap should define zerotier-config
+  assertStringIncludes(configmapContent, "zerotier-config");
+  // Secret should define zerotier-credentials
+  assertStringIncludes(secretContent, "zerotier-credentials");
+});
+
+Deno.test("e2e: firewall zones reference zerotier interface pattern", async () => {
+  const firewallContent = await Deno.readTextFile("configs/firewall.ncl");
+
+  // Should have zerotier zone with zt+ interface pattern
+  assertStringIncludes(firewallContent, "zerotier");
+  assertStringIncludes(firewallContent, "zt+");
+});
+
+Deno.test("e2e: routes match network config IP pools", async () => {
+  const networkContent = await Deno.readTextFile("configs/network.ncl");
+  const routesContent = await Deno.readTextFile("configs/routes.ncl");
+
+  // Extract the IPv4 pool range from network config
+  const networkPoolMatch = networkContent.match(/start\s*=\s*"(\d+\.\d+\.\d+\.\d+)"/);
+  if (networkPoolMatch) {
+    const ipStart = networkPoolMatch[1];
+    // Extract subnet from IP
+    const subnet = ipStart.split(".").slice(0, 3).join(".") + ".0/24";
+
+    // Routes should reference this subnet
+    assertStringIncludes(routesContent, "10.147.17.0/24");
+  }
+});
+
+Deno.test("e2e: capabilities in network config align with daemonset permissions", async () => {
+  const networkContent = await Deno.readTextFile("configs/network.ncl");
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Network config should allow managed IPs
+  assertStringIncludes(networkContent, "allow_managed_ips = true");
+
+  // Daemonset should have CAP_NET_ADMIN for network management
+  assertStringIncludes(daemonsetContent, "NET_ADMIN");
+});

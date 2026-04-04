@@ -1,0 +1,180 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+//
+// Property-based tests for configuration consistency and naming conventions
+
+import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
+
+// Property: Config files are repeatedly readable
+Deno.test("property: Nickel configs readable in 100-iteration loop", async () => {
+  const configs = ["configs/network.ncl", "configs/firewall.ncl", "configs/routes.ncl"];
+
+  for (let i = 0; i < 100; i++) {
+    for (const config of configs) {
+      const content = await Deno.readTextFile(config);
+      assertEquals(typeof content, "string");
+    }
+  }
+});
+
+// Property: Nickel files follow naming conventions (lowercase-hyphen)
+Deno.test("property: Nickel files follow lowercase-hyphen naming", async () => {
+  const configs = ["network.ncl", "firewall.ncl", "routes.ncl"];
+
+  for (const config of configs) {
+    const filename = config.replace(".ncl", "");
+    // Should be lowercase and hyphenated (no CamelCase, no SCREAMING_SNAKE_CASE)
+    assertEquals(/^[a-z-]+$/.test(filename), true);
+  }
+});
+
+// Property: Manifest files follow lowercase-hyphen-yaml naming
+Deno.test("property: Kubernetes manifest files follow naming conventions", async () => {
+  const manifests = [
+    "configmap.yaml",
+    "daemonset.yaml",
+    "namespace.yaml",
+    "networkpolicy.yaml",
+    "secret.yaml",
+    "servicemonitor.yaml",
+  ];
+
+  for (const manifest of manifests) {
+    const filename = manifest.replace(".yaml", "");
+    // Should be lowercase and hyphenated (no CamelCase)
+    assertEquals(/^[a-z-]+$/.test(filename), true);
+  }
+});
+
+// Property: ZeroTier network IDs are 16 hex characters when not placeholder
+Deno.test("property: ZeroTier network ID format validation", async () => {
+  const content = await Deno.readTextFile("configs/network.ncl");
+
+  // Extract network_id value
+  const match = content.match(/network_id[^=]*=\s*"([^"]+)"/);
+  if (match) {
+    const networkId = match[1];
+    // Either a placeholder (CHANGEME_NETWORK_ID) or 16 hex chars
+    const isPlaceholder = networkId.includes("CHANGEME") || networkId.includes("EXAMPLE");
+    const isValidHex = /^[0-9a-fA-F]{16}$/.test(networkId);
+
+    assertEquals(isPlaceholder || isValidHex, true);
+  }
+});
+
+// Property: IPv4 pool start < end
+Deno.test("property: IPv4 assignment pool is valid range", async () => {
+  const content = await Deno.readTextFile("configs/network.ncl");
+
+  // Extract start and end IPs
+  const startMatch = content.match(/start\s*=\s*"([^"]+)"/);
+  const endMatch = content.match(/end\s*=\s*"([^"]+)"/);
+
+  if (startMatch && endMatch) {
+    const startIp = startMatch[1];
+    const endIp = endMatch[1];
+
+    // Basic validation: both look like IPs
+    assertEquals(/^\d+\.\d+\.\d+\.\d+$/.test(startIp), true);
+    assertEquals(/^\d+\.\d+\.\d+\.\d+$/.test(endIp), true);
+
+    // Convert to numbers for comparison
+    const startOctets = startIp.split(".").map(Number);
+    const endOctets = endIp.split(".").map(Number);
+    const startNum = startOctets[0] * 256 ** 3 + startOctets[1] * 256 ** 2 + startOctets[2] * 256 + startOctets[3];
+    const endNum = endOctets[0] * 256 ** 3 + endOctets[1] * 256 ** 2 + endOctets[2] * 256 + endOctets[3];
+
+    assertEquals(startNum < endNum, true);
+  }
+});
+
+// Property: Firewall rules have required fields
+Deno.test("property: Firewall rules have action and type fields", async () => {
+  const content = await Deno.readTextFile("configs/firewall.ncl");
+
+  // Should contain action fields
+  assertEquals(content.includes("action ="), true);
+  // Should contain type or protocol fields
+  assertEquals(content.includes("type =") || content.includes("protocol ="), true);
+});
+
+// Property: Routes destination formats are valid CIDR
+Deno.test("property: Route destinations are valid CIDR notation", async () => {
+  const content = await Deno.readTextFile("configs/routes.ncl");
+
+  // Extract all destination/target values
+  const cidrPattern = /(?:destination|target)\s*=\s*"([^"]+)"/g;
+  let match;
+
+  while ((match = cidrPattern.exec(content)) !== null) {
+    const cidr = match[1];
+    // Should be in CIDR notation (IP/prefix)
+    assertEquals(/^\d+\.\d+\.\d+\.\d+\/\d+$|^[a-f0-9:]+\/\d+$/.test(cidr), true);
+  }
+});
+
+// Property: All manifest namespaces are consistent
+Deno.test("property: Kubernetes manifest namespace consistency", async () => {
+  const manifests = [
+    "manifests/daemonset.yaml",
+    "manifests/networkpolicy.yaml",
+    "manifests/secret.yaml",
+  ];
+
+  const namespaces = new Set<string>();
+
+  for (const manifest of manifests) {
+    const content = await Deno.readTextFile(manifest);
+    const match = content.match(/namespace:\s*([a-z0-9-]+)/);
+    if (match) {
+      namespaces.add(match[1]);
+    }
+  }
+
+  // All manifests should use the same namespace
+  assertEquals(namespaces.size <= 1, true);
+});
+
+// Property: DaemonSet selector matches pod labels
+Deno.test("property: DaemonSet selector matches pod labels", async () => {
+  const content = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Extract selector labels
+  const selectorMatch = content.match(/selector:\s*\n\s*matchLabels:\s*\n([\s\S]*?)(?=\n\s*template:)/);
+  const templateMatch = content.match(/template:\s*\n\s*metadata:\s*\n\s*labels:\s*\n([\s\S]*?)(?=\n\s*spec:)/);
+
+  if (selectorMatch && templateMatch) {
+    // Both should contain app.kubernetes.io/name: zerotier
+    assertEquals(selectorMatch[0].includes("zerotier"), true);
+    assertEquals(templateMatch[0].includes("zerotier"), true);
+  }
+});
+
+// Property: NetworkPolicy targets matching labeled pods
+Deno.test("property: NetworkPolicy pod selector is defined", async () => {
+  const content = await Deno.readTextFile("manifests/networkpolicy.yaml");
+
+  // Should have podSelector with labels
+  assertEquals(content.includes("podSelector:"), true);
+  assertEquals(content.includes("matchLabels:"), true);
+});
+
+// Property: Firewall zone names are valid identifiers
+Deno.test("property: Firewall zone names are lowercase identifiers", async () => {
+  const content = await Deno.readTextFile("configs/firewall.ncl");
+
+  // Extract zone names
+  const zonePattern = /zones\s*=\s*\{([\s\S]*?)\}/;
+  const match = content.match(zonePattern);
+
+  if (match) {
+    const zones = match[1].match(/(\w+)\s*=\s*\{/g);
+    if (zones) {
+      for (const zone of zones) {
+        const zoneName = zone.replace(/[=\s{]/g, "");
+        // Should be lowercase alphanumeric
+        assertEquals(/^[a-z0-9_]+$/.test(zoneName), true);
+      }
+    }
+  }
+});

@@ -1,0 +1,194 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+//
+// Aspect tests for security properties across the configuration
+
+import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
+
+Deno.test("aspect: No hardcoded API keys in network config", async () => {
+  const content = await Deno.readTextFile("configs/network.ncl");
+
+  // Should use placeholders, not real credentials
+  const realTokenPatterns = [
+    /[a-zA-Z0-9]{32,}/,  // 32+ char alphanumeric (real tokens)
+    /sk_live_/,           // Stripe pattern
+    /zt_[a-zA-Z0-9]+/,    // ZT pattern
+  ];
+
+  for (const pattern of realTokenPatterns) {
+    const hasRealCredential = pattern.test(content) && !content.includes("CHANGEME");
+    assertEquals(hasRealCredential, false);
+  }
+});
+
+Deno.test("aspect: No hardcoded tokens in daemonset", async () => {
+  const content = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Should use secretKeyRef, not hardcoded values
+  const credentials = content.match(/ZEROTIER_[A-Z_]+/g) || [];
+  for (const cred of credentials) {
+    const hasSecretRef = content.includes("secretKeyRef") || content.includes("configMapKeyRef");
+    assertEquals(hasSecretRef, true);
+  }
+});
+
+Deno.test("aspect: No HTTP endpoints (HTTPS only)", async () => {
+  const files = [
+    "configs/network.ncl",
+    "configs/firewall.ncl",
+    "configs/routes.ncl",
+    "manifests/daemonset.yaml",
+    "manifests/networkpolicy.yaml",
+  ];
+
+  for (const file of files) {
+    const content = await Deno.readTextFile(file);
+    // Should not have http:// URLs (except in comments)
+    const httpUrls = content.match(/(?<!#.*?)http:\/\/[^ "#\n]+/);
+    assertEquals(httpUrls === null, true);
+  }
+});
+
+Deno.test("aspect: No world-readable permission patterns (chmod 777)", async () => {
+  const files = [
+    "scripts/authorize-nodes.sh",
+    "scripts/configure-routes.sh",
+    "scripts/health-check.sh",
+    "scripts/join-network.sh",
+    "setup.sh",
+  ];
+
+  for (const file of files) {
+    const content = await Deno.readTextFile(file);
+    // Should not have 777 permissions
+    assertEquals(content.includes("chmod 777") || content.includes("chmod a+rwx"), false);
+  }
+});
+
+Deno.test("aspect: ZeroTier auth tokens are placeholders only", async () => {
+  const content = await Deno.readTextFile("manifests/secret.yaml");
+
+  // Should use EXAMPLE placeholders
+  const hasPlaceholder = content.includes("EXAMPLE_API_TOKEN") && content.includes("EXAMPLE_NETWORK_ID");
+  assertEquals(hasPlaceholder, true);
+
+  // Should not contain real-looking tokens
+  const realTokenPattern = /[a-z0-9]{20,}/;
+  const looksRealButNotExample = realTokenPattern.test(content) && !content.includes("EXAMPLE");
+  assertEquals(looksRealButNotExample, false);
+});
+
+Deno.test("aspect: NetworkPolicy has both ingress and egress rules", async () => {
+  const content = await Deno.readTextFile("manifests/networkpolicy.yaml");
+
+  // Must explicitly define both
+  assertEquals(content.includes("ingress:"), true);
+  assertEquals(content.includes("egress:"), true);
+
+  // Should not be empty
+  assertEquals(content.includes("ingress: []"), false);
+  assertEquals(content.includes("egress: []"), false);
+});
+
+Deno.test("aspect: No plaintext passwords in manifests", async () => {
+  const manifests = [
+    "manifests/configmap.yaml",
+    "manifests/daemonset.yaml",
+    "manifests/namespace.yaml",
+    "manifests/networkpolicy.yaml",
+    "manifests/secret.yaml",
+    "manifests/servicemonitor.yaml",
+  ];
+
+  const passwordPatterns = [/password\s*:\s*[^#\n]+[a-zA-Z0-9]{8,}/, /passwd\s*:\s*[^#\n]+/];
+
+  for (const manifest of manifests) {
+    const content = await Deno.readTextFile(manifest);
+
+    for (const pattern of passwordPatterns) {
+      // Should not have unencoded passwords
+      const match = pattern.exec(content);
+      if (match) {
+        // Must be a placeholder or base64
+        const isPlaceholder = match[0].includes("EXAMPLE") || match[0].includes("CHANGEME");
+        const isBase64Hint = match[0].includes("base64") || match[0].includes("encoded");
+        assertEquals(isPlaceholder || isBase64Hint, true);
+      }
+    }
+  }
+});
+
+Deno.test("aspect: No expose of internal credentials via logs", async () => {
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Should not directly echo secret environment variables
+  // (using secretKeyRef is OK, but shouldn't directly print values)
+  const hasDirectEchoOfSecret = daemonsetContent.match(/echo\s+"\s*\$ZEROTIER_(NETWORK_ID|API_TOKEN)/);
+  assertEquals(hasDirectEchoOfSecret === null, true);
+});
+
+Deno.test("aspect: Firewall denies by default (principle of least privilege)", async () => {
+  const content = await Deno.readTextFile("configs/firewall.ncl");
+
+  // Input and Forward should be DROP (most restrictive)
+  assertEquals(content.includes(`input_policy = "DROP"`), true);
+  assertEquals(content.includes(`forward_policy = "DROP"`), true);
+
+  // Output may be ACCEPT for outbound connections
+  assertEquals(content.includes(`output_policy = "ACCEPT"`) || content.includes(`output_policy = "DROP"`), true);
+});
+
+Deno.test("aspect: DaemonSet security context restricts container capabilities", async () => {
+  const content = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Must have securityContext defined
+  assertEquals(content.includes("securityContext:"), true);
+});
+
+Deno.test("aspect: No hardcoded secrets in scripts", async () => {
+  const scripts = [
+    "scripts/authorize-nodes.sh",
+    "scripts/configure-routes.sh",
+    "scripts/health-check.sh",
+    "scripts/join-network.sh",
+    "setup.sh",
+  ];
+
+  for (const script of scripts) {
+    const content = await Deno.readTextFile(script);
+
+    // Should not embed API tokens or network IDs
+    const hasEmbeddedSecret =
+      /[a-zA-Z0-9]{32,}/.test(content) &&
+      !content.includes("CHANGEME") &&
+      !content.includes("EXAMPLE") &&
+      !content.includes("$");
+
+    // Allow variable references but not literal secrets
+    assertEquals(hasEmbeddedSecret && !content.includes("${"), false);
+  }
+});
+
+Deno.test("aspect: Network config disables dangerous capabilities", async () => {
+  const content = await Deno.readTextFile("configs/network.ncl");
+
+  // Should not allow global IPs via ZT network
+  assertEquals(content.includes("allow_global_ips = false"), true);
+
+  // Should not allow default route hijacking
+  assertEquals(content.includes("allow_default_route = false"), true);
+});
+
+Deno.test("aspect: Kubernetes RBAC references are appropriate", async () => {
+  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+
+  // Should not request cluster-admin role
+  assertEquals(daemonsetContent.includes("cluster-admin"), false);
+});
+
+Deno.test("aspect: Secret is type Opaque not other types", async () => {
+  const content = await Deno.readTextFile("manifests/secret.yaml");
+
+  // Should be Opaque type for sensitive data
+  assertEquals(content.includes('type: Opaque') || content.includes('type: "Opaque"'), true);
+});

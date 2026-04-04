@@ -5,10 +5,23 @@
 [metadata]
 project = "zerotier-k8s-link"
 version = "0.1.0"
-last-updated = "2026-03-15"
+last-updated = "2026-04-04"
 status = "active"
+crg-grade = "C"
 
 [project-context]
 name = "zerotier-k8s-link"
-completion-percentage = 0
-phase = "In development"
+completion-percentage = 40
+phase = "Testing & CRG Grading"
+test-status = "All 79 tests passing, 11 benchmarks baselined"
+
+[test-coverage]
+unit-tests = 13
+smoke-tests = 10
+property-tests = 11
+e2e-tests = 12
+contract-tests = 19
+aspect-tests = 14
+benchmarks = 11
+total-tests = 79
+success-rate = "100%"
