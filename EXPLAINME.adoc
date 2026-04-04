@@ -3,41 +3,117 @@
 :toc:
 :icons: font
 
-The README makes claims. This file backs them up.
+The README makes claims. This file backs them up with evidence from real code.
 
-[quote, README]
+== Core Claims & Evidence
+
+=== Claim 1: "Join Kubernetes Nodes to ZeroTier Network via DaemonSet"
+
+**From README** (lines 18-22, 49-52):
 ____
 Join Kubernetes nodes to a ZeroTier network and configure encrypted overlay routing.
+
+* **Node join scripts** - DaemonSet-based ZeroTier agent deployment
+* **Routing table definitions** - Declarative route configuration
 ____
 
-== Technology Choices
+**Evidence**: `/var/mnt/eclipse/repos/zerotier-k8s-link/manifests/daemonset.yaml` defines a Kubernetes DaemonSet that deploys the ZeroTier agent to each node. `/var/mnt/eclipse/repos/zerotier-k8s-link/scripts/join-network.sh` automates network joining with node identity authorization.
 
-[cols="1,2"]
-|===
-| Technology | Learn More
+**Caveat**: Implementation is *scaffolding stage*. DaemonSet manifest exists; full integration with Kubernetes node lifecycle management (node drain, taint/toleration) is incomplete.
 
-| **Zig** | https://ziglang.org
-| **Idris2 ABI** | https://www.idris-lang.org
-|===
+=== Claim 2: "Declarative Route Configuration via Nickel Contracts"
+
+**From README** (lines 72-73):
+____
+├── configs/
+│   ├── network.ncl          # Nickel network definition
+│   ├── routes.ncl           # Route table configuration
+│   └── firewall.ncl         # Firewall rules
+____
+
+**Evidence**: `/var/mnt/eclipse/repos/zerotier-k8s-link/configs/network.ncl` defines ZeroTier network parameters (network ID, IP range, DNS). `/var/mnt/eclipse/repos/zerotier-k8s-link/configs/routes.ncl` specifies overlay routing rules as Nickel contracts (validated at load time). `/var/mnt/eclipse/repos/zerotier-k8s-link/scripts/configure-routes.sh` applies validated route tables to live cluster.
+
+**Caveat**: Routes are *syntactically valid* (Nickel validation). No formal proof that routing rules avoid loops, partitions, or blackholes.
+
+=== Claim 3: "Integration Points: Twingate (External Access) + IPFS (Overlay Services)"
+
+**From README** (lines 122-128):
+____
+=== With FlatRacoon Stack
+
+* **twingate-helm-deploy** - External access routes through Twingate
+* **ipfs-overlay** - IPFS binds exclusively to ZeroTier interface
+* **poly-observability-mcp** - Mesh health monitoring
+____
+
+**Evidence**: Integration specs at `/var/mnt/eclipse/repos/zerotier-k8s-link/docs/INTEGRATION.md`. Manifest references to Twingate deploy at `/var/mnt/eclipse/repos/zerotier-k8s-link/manifests/twingate-integration.yaml` (stub). IPFS peer discovery constrained to ZeroTier overlay via `/var/mnt/eclipse/repos/zerotier-k8s-link/configs/ipfs.ncl`.
+
+**Caveat**: Integration is *planned*. Specs exist; implementation is partial. Twingate+ZeroTier handoff not tested in production.
 
 == Dogfooded Across The Account
 
-Uses the hyperpolymath ABI/FFI standard (Idris2 + Zig). Same pattern used across
-https://github.com/hyperpolymath/proven[proven],
-https://github.com/hyperpolymath/burble[burble], and
-https://github.com/hyperpolymath/gossamer[gossamer].
+Uses hyperpolymath network stack (Nickel config + ZeroTier overlay + Kubernetes orchestration). Same pattern across:
+- https://github.com/hyperpolymath/flatracoon-netstack[flatracoon-netstack] — Network stack umbrella (parent)
+- https://github.com/hyperpolymath/twingate-helm-deploy[twingate-helm-deploy] — External gateway (integrates)
+- https://github.com/hyperpolymath/ipfs-overlay[ipfs-overlay] — IPFS on ZeroTier (integrates)
+- https://github.com/hyperpolymath/poly-observability-mcp[poly-observability-mcp] — Health monitoring (integrates)
+
+All share: *Declarative Nickel config, Kubernetes DaemonSet deployment, mesh network abstractions.*
 
 == File Map
 
-[cols="1,2"]
+[cols="1,3"]
 |===
-| Path | What's There
+| Path | Contents & Purpose
 
-| `src/` | Source code
-| `ffi/` | Foreign function interface
-| `test(s)/` | Test suite
+| `manifests/daemonset.yaml` | Kubernetes DaemonSet: ZeroTier agent pod on all nodes, mounts host network NS, performs join
+
+| `manifests/configmap.yaml` | ConfigMap: ZeroTier network config (network ID, allowed routes), shared to all nodes
+
+| `manifests/secret.yaml` | Secret: ZeroTier API token, network join authorization tokens (one per node)
+
+| `manifests/networkpolicy.yaml` | NetworkPolicy: Kubernetes pod communication rules, controls inter-pod access on overlay network
+
+| `scripts/join-network.sh` | Node join automation: authenticates node identity with ZeroTier Central API, assigns overlay IP
+
+| `scripts/configure-routes.sh` | Route configuration: applies validated routing rules from routes.ncl to live cluster
+
+| `scripts/health-check.sh` | Connectivity verification: validates peer-to-peer connectivity, latency measurement, mesh health
+
+| `configs/network.ncl` | Nickel network definition: ZeroTier network ID, IPv4 range (10.147.17.0/24), IPv6 space (fd00:feed:face::/48), DNS configuration
+
+| `configs/routes.ncl` | Nickel route table: overlay routing rules (static routes, BGP-style announcements), validated as contracts
+
+| `configs/firewall.ncl` | Nickel firewall rules: nftables/firewalld config for overlay interface, inbound/outbound policies
+
+| `docs/TOPOLOGY.md` | Network topology documentation: node layout, peer discovery, IPFS service location
+
+| `docs/INTEGRATION.md` | Integration specs: Twingate external access, IPFS binding, observability hooks
+
+| `.machine_readable/6a2/STATE.a2ml` | Project state: 10% completion, scaffolding phase, DaemonSet implementation next
+
+| `.machine_readable/6a2/META.a2ml` | Architecture decisions: Nickel for contracts, DaemonSet for deployment, ZeroTier Central for coordination
+
+| `.machine_readable/6a2/ECOSYSTEM.a2ml` | Related projects: FlatRacoon parent, Twingate/IPFS/observability satellites
 |===
+
+== Status
+
+**Honest Assessment**: Scaffolding stage. Infrastructure (manifests, scripts, Nickel config structure) is in place. Core implementation (DaemonSet lifecycle, route automation, integration tests) is partial.
+
+**What's Ready**:
+- DaemonSet manifest
+- Node join script
+- Nickel config contracts
+- Route/firewall config structure
+
+**What's Incomplete**:
+- Full DaemonSet lifecycle (node drain, taint/toleration)
+- Route automation against live cluster
+- Twingate integration tests
+- IPFS overlay binding
+- Health monitoring
 
 == Questions?
 
-Open an issue or reach out directly — happy to explain anything in more detail.
+Open an issue or reach out at j.d.a.jewell@open.ac.uk — happy to explain the ZeroTier mesh topology, Nickel config contracts, or FlatRacoon integration strategy.
