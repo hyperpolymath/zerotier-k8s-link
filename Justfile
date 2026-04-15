@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: PMPL-1.0
 # Justfile - ZeroTier K8s Link deployment automation
 
+import? "contractile.just"
+
 default:
     @just --list
 
