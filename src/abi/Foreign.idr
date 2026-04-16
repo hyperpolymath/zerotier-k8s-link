@@ -1,5 +1,5 @@
--- SPDX-License-Identifier: PMPL-1.0-or-later
-||| Foreign Function Interface Declarations
+||| SPDX-License-Identifier: PMPL-1.0-or-later
+||| Foreign Function Interface Declarations for ZEROTIER_K8S_LINK
 |||
 ||| This module declares all C-compatible functions that will be
 ||| implemented in the Zig FFI layer.
@@ -7,10 +7,10 @@
 ||| All functions are declared here with type signatures and safety proofs.
 ||| Implementations live in ffi/zig/
 
-module ZEROTIER_K8S_LINK.ABI.Foreign
+module ZerotierK8sLink.ABI.Foreign
 
-import ZEROTIER_K8S_LINK.ABI.Types
-import ZEROTIER_K8S_LINK.ABI.Layout
+import ZerotierK8sLink.ABI.Types
+import ZerotierK8sLink.ABI.Layout
 
 %default total
 
@@ -21,7 +21,7 @@ import ZEROTIER_K8S_LINK.ABI.Layout
 ||| Initialize the library
 ||| Returns a handle to the library instance, or Nothing on failure
 export
-%foreign "C:zerotier-k8s-link_init, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_init, libzerotier_k8s_link"
 prim__init : PrimIO Bits64
 
 ||| Safe wrapper for library initialization
@@ -33,7 +33,7 @@ init = do
 
 ||| Clean up library resources
 export
-%foreign "C:zerotier-k8s-link_free, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_free, libzerotier_k8s_link"
 prim__free : Bits64 -> PrimIO ()
 
 ||| Safe wrapper for cleanup
@@ -47,7 +47,7 @@ free h = primIO (prim__free (handlePtr h))
 
 ||| Example operation: process data
 export
-%foreign "C:zerotier-k8s-link_process, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_process, libzerotier_k8s_link"
 prim__process : Bits64 -> Bits32 -> PrimIO Bits32
 
 ||| Safe wrapper with error handling
@@ -70,12 +70,12 @@ prim__getString : Bits64 -> String
 
 ||| Free C string
 export
-%foreign "C:zerotier-k8s-link_free_string, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_free_string, libzerotier_k8s_link"
 prim__freeString : Bits64 -> PrimIO ()
 
 ||| Get string result from library
 export
-%foreign "C:zerotier-k8s-link_get_string, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_get_string, libzerotier_k8s_link"
 prim__getResult : Bits64 -> PrimIO Bits64
 
 ||| Safe string getter
@@ -96,7 +96,7 @@ getString h = do
 
 ||| Process array data
 export
-%foreign "C:zerotier-k8s-link_process_array, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_process_array, libzerotier_k8s_link"
 prim__processArray : Bits64 -> Bits64 -> Bits32 -> PrimIO Bits32
 
 ||| Safe array processor
@@ -123,7 +123,7 @@ processArray h buf len = do
 
 ||| Get last error message
 export
-%foreign "C:zerotier-k8s-link_last_error, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_last_error, libzerotier_k8s_link"
 prim__lastError : PrimIO Bits64
 
 ||| Retrieve last error as string
@@ -150,7 +150,7 @@ errorDescription NullPointer = "Null pointer"
 
 ||| Get library version
 export
-%foreign "C:zerotier-k8s-link_version, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_version, libzerotier_k8s_link"
 prim__version : PrimIO Bits64
 
 ||| Get version as string
@@ -162,7 +162,7 @@ version = do
 
 ||| Get library build info
 export
-%foreign "C:zerotier-k8s-link_build_info, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_build_info, libzerotier_k8s_link"
 prim__buildInfo : PrimIO Bits64
 
 ||| Get build information
@@ -183,7 +183,7 @@ Callback = Bits64 -> Bits32 -> Bits32
 
 ||| Register a callback
 export
-%foreign "C:zerotier-k8s-link_register_callback, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_register_callback, libzerotier_k8s_link"
 prim__registerCallback : Bits64 -> AnyPtr -> PrimIO Bits32
 
 ||| Safe callback registration
@@ -206,7 +206,7 @@ registerCallback h cb = do
 
 ||| Check if library is initialized
 export
-%foreign "C:zerotier-k8s-link_is_initialized, libzerotier-k8s-link"
+%foreign "C:zerotier_k8s_link_is_initialized, libzerotier_k8s_link"
 prim__isInitialized : Bits64 -> PrimIO Bits32
 
 ||| Check initialization status

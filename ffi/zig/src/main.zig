@@ -51,7 +51,7 @@ pub const Handle = opaque {
 
 /// Initialize the library
 /// Returns a handle, or null on failure
-export fn zerotier-k8s-link_init() ?*Handle {
+export fn zerotier_k8s_link_init() ?*Handle {
     const allocator = std.heap.c_allocator;
 
     const handle = allocator.create(Handle) catch {
@@ -70,7 +70,7 @@ export fn zerotier-k8s-link_init() ?*Handle {
 }
 
 /// Free the library handle
-export fn zerotier-k8s-link_free(handle: ?*Handle) void {
+export fn zerotier_k8s_link_free(handle: ?*Handle) void {
     const h = handle orelse return;
     const allocator = h.allocator;
 
@@ -86,7 +86,7 @@ export fn zerotier-k8s-link_free(handle: ?*Handle) void {
 //==============================================================================
 
 /// Process data (example operation)
-export fn zerotier-k8s-link_process(handle: ?*Handle, input: u32) Result {
+export fn zerotier_k8s_link_process(handle: ?*Handle, input: u32) Result {
     const h = handle orelse {
         setError("Null handle");
         return .null_pointer;
@@ -110,7 +110,7 @@ export fn zerotier-k8s-link_process(handle: ?*Handle, input: u32) Result {
 
 /// Get a string result (example)
 /// Caller must free the returned string
-export fn zerotier-k8s-link_get_string(handle: ?*Handle) ?[*:0]const u8 {
+export fn zerotier_k8s_link_get_string(handle: ?*Handle) ?[*:0]const u8 {
     const h = handle orelse {
         setError("Null handle");
         return null;
@@ -132,7 +132,7 @@ export fn zerotier-k8s-link_get_string(handle: ?*Handle) ?[*:0]const u8 {
 }
 
 /// Free a string allocated by the library
-export fn zerotier-k8s-link_free_string(str: ?[*:0]const u8) void {
+export fn zerotier_k8s_link_free_string(str: ?[*:0]const u8) void {
     const s = str orelse return;
     const allocator = std.heap.c_allocator;
 
@@ -145,7 +145,7 @@ export fn zerotier-k8s-link_free_string(str: ?[*:0]const u8) void {
 //==============================================================================
 
 /// Process an array of data
-export fn zerotier-k8s-link_process_array(
+export fn zerotier_k8s_link_process_array(
     handle: ?*Handle,
     buffer: ?[*]const u8,
     len: u32,
@@ -181,7 +181,7 @@ export fn zerotier-k8s-link_process_array(
 
 /// Get the last error message
 /// Returns null if no error
-export fn zerotier-k8s-link_last_error() ?[*:0]const u8 {
+export fn zerotier_k8s_link_last_error() ?[*:0]const u8 {
     const err = last_error orelse return null;
 
     // Return C string (static storage, no need to free)
@@ -195,12 +195,12 @@ export fn zerotier-k8s-link_last_error() ?[*:0]const u8 {
 //==============================================================================
 
 /// Get the library version
-export fn zerotier-k8s-link_version() [*:0]const u8 {
+export fn zerotier_k8s_link_version() [*:0]const u8 {
     return VERSION.ptr;
 }
 
 /// Get build information
-export fn zerotier-k8s-link_build_info() [*:0]const u8 {
+export fn zerotier_k8s_link_build_info() [*:0]const u8 {
     return BUILD_INFO.ptr;
 }
 
@@ -212,7 +212,7 @@ export fn zerotier-k8s-link_build_info() [*:0]const u8 {
 pub const Callback = *const fn (u64, u32) callconv(.C) u32;
 
 /// Register a callback
-export fn zerotier-k8s-link_register_callback(
+export fn zerotier_k8s_link_register_callback(
     handle: ?*Handle,
     callback: ?Callback,
 ) Result {
@@ -243,7 +243,7 @@ export fn zerotier-k8s-link_register_callback(
 //==============================================================================
 
 /// Check if handle is initialized
-export fn zerotier-k8s-link_is_initialized(handle: ?*Handle) u32 {
+export fn zerotier_k8s_link_is_initialized(handle: ?*Handle) u32 {
     const h = handle orelse return 0;
     return if (h.initialized) 1 else 0;
 }
@@ -253,22 +253,22 @@ export fn zerotier-k8s-link_is_initialized(handle: ?*Handle) u32 {
 //==============================================================================
 
 test "lifecycle" {
-    const handle = zerotier-k8s-link_init() orelse return error.InitFailed;
-    defer zerotier-k8s-link_free(handle);
+    const handle = zerotier_k8s_link_init() orelse return error.InitFailed;
+    defer zerotier_k8s_link_free(handle);
 
-    try std.testing.expect(zerotier-k8s-link_is_initialized(handle) == 1);
+    try std.testing.expect(zerotier_k8s_link_is_initialized(handle) == 1);
 }
 
 test "error handling" {
-    const result = zerotier-k8s-link_process(null, 0);
+    const result = zerotier_k8s_link_process(null, 0);
     try std.testing.expectEqual(Result.null_pointer, result);
 
-    const err = zerotier-k8s-link_last_error();
+    const err = zerotier_k8s_link_last_error();
     try std.testing.expect(err != null);
 }
 
 test "version" {
-    const ver = zerotier-k8s-link_version();
+    const ver = zerotier_k8s_link_version();
     const ver_str = std.mem.span(ver);
     try std.testing.expectEqualStrings(VERSION, ver_str);
 }
