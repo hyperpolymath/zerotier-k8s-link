@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: PMPL-1.0-or-later
+-- SPDX-License-Identifier: MPL-2.0
 -- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 --
 -- Port of tests/unit/config_structure_test.ts to Idris2, estate-rollout port 9/11.
@@ -50,7 +50,7 @@ allSuites =
         (a && b && c && d && e && f)
 
   , test "Unit: Nickel configs have SPDX headers" $ do
-      let spdx = "SPDX-License-Identifier: PMPL-1.0-or-later"
+      let spdx = "SPDX-License-Identifier: MPL-2.0"
       a <- readFileToString "configs/network.ncl"
       b <- readFileToString "configs/firewall.ncl"
       c <- readFileToString "configs/routes.ncl"
