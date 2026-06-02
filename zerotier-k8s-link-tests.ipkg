@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: PMPL-1.0-or-later
+-- SPDX-License-Identifier: MPL-2.0
 -- zerotier-k8s-link Idris2 test suite. Estate port 9/11 — all 6 TS test
 -- files ported (unit + contract + aspect + property + smoke + e2e),
 -- content-validation pattern with pure-logic ports for IPv4/CIDR/network-ID

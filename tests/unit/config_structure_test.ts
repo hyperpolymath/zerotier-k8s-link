@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
 // Unit tests for configuration file structure validation
@@ -39,7 +39,7 @@ Deno.test("unit: Nickel configs have SPDX headers", async () => {
 
   for (const config of configs) {
     const content = await Deno.readTextFile(config);
-    assertStringIncludes(content, "SPDX-License-Identifier: PMPL-1.0-or-later");
+    assertStringIncludes(content, "SPDX-License-Identifier: MPL-2.0");
   }
 });
 
