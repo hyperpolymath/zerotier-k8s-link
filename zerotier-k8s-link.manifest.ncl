@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: PMPL-1.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # zerotier-k8s-link module manifest for FlatRacoon orchestrator
 #
 # This Nickel configuration file defines the ZeroTier mesh networking module.

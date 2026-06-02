@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 = IPFS Overlay Integration Guide
 
 This guide explains how IPFS overlay uses ZeroTier K8s Link as its foundation for secure, private IPFS clusters.
