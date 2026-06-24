@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-DEV.adoc — clone → build → test → PR
 // Replace zerotier-k8s-link, {{BUILD_CMD}}, {{TEST_CMD}}, {{LANG_STACK}} with actuals
 = zerotier-k8s-link — Quick Start for Developers

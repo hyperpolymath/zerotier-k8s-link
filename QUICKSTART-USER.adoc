@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-USER.adoc — 5-minute path to working software
 // Replace zerotier-k8s-link, Zerotier K8S Link — See README.adoc for details., just run, Zerotier K8S Link started successfully. with actuals
 = zerotier-k8s-link — Quick Start for Users

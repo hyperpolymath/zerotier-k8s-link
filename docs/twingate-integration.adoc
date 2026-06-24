@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: CC-BY-SA-4.0
 = Twingate Integration Guide
 
 This guide explains how to integrate ZeroTier K8s Link with Twingate for layered secure access.
