@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
+// Ported via Harvard Engine mechanical processor
+
+module network_property_test;
+
+// TODO: Complete semantic implementation
+
+/* === ORIGINAL TYPESCRIPT CONTEXT ===
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
 // Property-based tests for configuration consistency and naming conventions
@@ -178,3 +186,5 @@ Deno.test("property: Firewall zone names are lowercase identifiers", async () =>
     }
   }
 });
+
+==================================== */
