@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
+// Ported via Harvard Engine mechanical processor
+
+module security_aspect_test;
+
+// TODO: Complete semantic implementation
+
+/* === ORIGINAL TYPESCRIPT CONTEXT ===
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
 // Aspect tests for security properties across the configuration
@@ -192,3 +200,5 @@ Deno.test("aspect: Secret is type Opaque not other types", async () => {
   // Should be Opaque type for sensitive data
   assertEquals(content.includes('type: Opaque') || content.includes('type: "Opaque"'), true);
 });
+
+==================================== */
