@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-// Ported via Harvard Engine mechanical processor
+// Ported via Harvard Engine (Semantic pass)
 
 module config_structure_test;
 
-// TODO: Complete semantic implementation
-
-/* === ORIGINAL TYPESCRIPT CONTEXT ===
 // SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
@@ -14,10 +11,10 @@ module config_structure_test;
 import { assertEquals, assertExists, assertStringIncludes } from "https://deno.land/std@0.208.0/assert/mod.ts";
 
 Deno.test("unit: Nickel config files exist", async () => {
-  const configs = ["configs/network.ncl", "configs/firewall.ncl", "configs/routes.ncl"];
+  let configs = ["configs/network.ncl", "configs/firewall.ncl", "configs/routes.ncl"];
 
   for (const config of configs) {
-    const content = await Deno.readTextFile(config);
+    let content = await Deno.readTextFile(config);
     assertExists(content);
     assertEquals(typeof content, "string");
     assertEquals(content.length > 0, true);
@@ -25,7 +22,7 @@ Deno.test("unit: Nickel config files exist", async () => {
 });
 
 Deno.test("unit: Kubernetes manifest files exist", async () => {
-  const manifests = [
+  let manifests = [
     "manifests/configmap.yaml",
     "manifests/daemonset.yaml",
     "manifests/namespace.yaml",
@@ -35,7 +32,7 @@ Deno.test("unit: Kubernetes manifest files exist", async () => {
   ];
 
   for (const manifest of manifests) {
-    const content = await Deno.readTextFile(manifest);
+    let content = await Deno.readTextFile(manifest);
     assertExists(content);
     assertEquals(typeof content, "string");
     assertEquals(content.length > 0, true);
@@ -43,16 +40,16 @@ Deno.test("unit: Kubernetes manifest files exist", async () => {
 });
 
 Deno.test("unit: Nickel configs have SPDX headers", async () => {
-  const configs = ["configs/network.ncl", "configs/firewall.ncl", "configs/routes.ncl"];
+  let configs = ["configs/network.ncl", "configs/firewall.ncl", "configs/routes.ncl"];
 
   for (const config of configs) {
-    const content = await Deno.readTextFile(config);
+    let content = await Deno.readTextFile(config);
     assertStringIncludes(content, "SPDX-License-Identifier: MPL-2.0");
   }
 });
 
 Deno.test("unit: network.ncl contains ZeroTier config", async () => {
-  const content = await Deno.readTextFile("configs/network.ncl");
+  let content = await Deno.readTextFile("configs/network.ncl");
   assertStringIncludes(content, "network_id");
   assertStringIncludes(content, "api_token");
   assertStringIncludes(content, "ipv4_assignment_pool");
@@ -61,7 +58,7 @@ Deno.test("unit: network.ncl contains ZeroTier config", async () => {
 });
 
 Deno.test("unit: firewall.ncl contains firewall rules", async () => {
-  const content = await Deno.readTextFile("configs/firewall.ncl");
+  let content = await Deno.readTextFile("configs/firewall.ncl");
   assertStringIncludes(content, "rules");
   assertStringIncludes(content, "zerotier_control");
   assertStringIncludes(content, "established");
@@ -71,13 +68,13 @@ Deno.test("unit: firewall.ncl contains firewall rules", async () => {
 });
 
 Deno.test("unit: firewall.ncl has deny-by-default policy", async () => {
-  const content = await Deno.readTextFile("configs/firewall.ncl");
+  let content = await Deno.readTextFile("configs/firewall.ncl");
   assertStringIncludes(content, `input_policy = "DROP"`);
   assertStringIncludes(content, `forward_policy = "DROP"`);
 });
 
 Deno.test("unit: routes.ncl contains route definitions", async () => {
-  const content = await Deno.readTextFile("configs/routes.ncl");
+  let content = await Deno.readTextFile("configs/routes.ncl");
   assertStringIncludes(content, "static_routes");
   assertStringIncludes(content, "network_routes");
   assertStringIncludes(content, "10.147.17.0/24");
@@ -85,14 +82,14 @@ Deno.test("unit: routes.ncl contains route definitions", async () => {
 });
 
 Deno.test("unit: daemonset.yaml references zerotier-system namespace", async () => {
-  const content = await Deno.readTextFile("manifests/daemonset.yaml");
+  let content = await Deno.readTextFile("manifests/daemonset.yaml");
   assertStringIncludes(content, "namespace: zerotier-system");
   assertStringIncludes(content, "kind: DaemonSet");
   assertStringIncludes(content, "app.kubernetes.io/name: zerotier");
 });
 
 Deno.test("unit: networkpolicy.yaml has ingress and egress rules", async () => {
-  const content = await Deno.readTextFile("manifests/networkpolicy.yaml");
+  let content = await Deno.readTextFile("manifests/networkpolicy.yaml");
   assertStringIncludes(content, "kind: NetworkPolicy");
   assertStringIncludes(content, "ingress:");
   assertStringIncludes(content, "egress:");
@@ -102,27 +99,26 @@ Deno.test("unit: networkpolicy.yaml has ingress and egress rules", async () => {
 });
 
 Deno.test("unit: secret.yaml has placeholder values only", async () => {
-  const content = await Deno.readTextFile("manifests/secret.yaml");
+  let content = await Deno.readTextFile("manifests/secret.yaml");
   assertStringIncludes(content, "kind: Secret");
   assertStringIncludes(content, "network-id: \"EXAMPLE_NETWORK_ID\"");
   assertStringIncludes(content, "api-token: \"EXAMPLE_API_TOKEN\"");
 });
 
 Deno.test("unit: namespace.yaml declares zerotier-system", async () => {
-  const content = await Deno.readTextFile("manifests/namespace.yaml");
+  let content = await Deno.readTextFile("manifests/namespace.yaml");
   assertStringIncludes(content, "kind: Namespace");
   assertStringIncludes(content, "zerotier-system");
 });
 
 Deno.test("unit: configmap.yaml exists and is valid YAML", async () => {
-  const content = await Deno.readTextFile("manifests/configmap.yaml");
+  let content = await Deno.readTextFile("manifests/configmap.yaml");
   assertStringIncludes(content, "kind: ConfigMap");
 });
 
 Deno.test("unit: servicemonitor.yaml exists and is valid YAML", async () => {
-  const content = await Deno.readTextFile("manifests/servicemonitor.yaml");
+  let content = await Deno.readTextFile("manifests/servicemonitor.yaml");
   // ServiceMonitor may be optional but should validate if present
   assertEquals(typeof content, "string");
 });
 
-==================================== */

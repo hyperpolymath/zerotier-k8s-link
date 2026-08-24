@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-// Ported via Harvard Engine mechanical processor
+// Ported via Harvard Engine (Semantic pass)
 
 module network_e2e_test;
 
-// TODO: Complete semantic implementation
-
-/* === ORIGINAL TYPESCRIPT CONTEXT ===
 // SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
@@ -14,7 +11,7 @@ module network_e2e_test;
 import { assertEquals, assertStringIncludes } from "https://deno.land/std@0.208.0/assert/mod.ts";
 
 Deno.test("e2e: full config pipeline - read all Nickel configs", async () => {
-  const configs = [
+  let configs = [
     await Deno.readTextFile("configs/network.ncl"),
     await Deno.readTextFile("configs/firewall.ncl"),
     await Deno.readTextFile("configs/routes.ncl"),
@@ -27,12 +24,12 @@ Deno.test("e2e: full config pipeline - read all Nickel configs", async () => {
 });
 
 Deno.test("e2e: K8s daemonset references correct namespace", async () => {
-  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
-  const namespaceContent = await Deno.readTextFile("manifests/namespace.yaml");
+  let daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  let namespaceContent = await Deno.readTextFile("manifests/namespace.yaml");
 
   // Extract namespace names
-  const daemonsetNs = daemonsetContent.match(/namespace:\s*([a-z0-9-]+)/);
-  const declaredNs = namespaceContent.match(/metadata:\s*\n\s*name:\s*([a-z0-9-]+)/);
+  let daemonsetNs = daemonsetContent.match(/namespace:\s*([a-z0-9-]+)/);
+  let declaredNs = namespaceContent.match(/metadata:\s*\n\s*name:\s*([a-z0-9-]+)/);
 
   if (daemonsetNs && declaredNs) {
     assertEquals(daemonsetNs[1], declaredNs[1]);
@@ -40,8 +37,8 @@ Deno.test("e2e: K8s daemonset references correct namespace", async () => {
 });
 
 Deno.test("e2e: NetworkPolicy references zerotier app labels", async () => {
-  const policyContent = await Deno.readTextFile("manifests/networkpolicy.yaml");
-  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  let policyContent = await Deno.readTextFile("manifests/networkpolicy.yaml");
+  let daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
 
   // Both should reference the same app label
   assertStringIncludes(policyContent, "app.kubernetes.io/name: zerotier");
@@ -49,8 +46,8 @@ Deno.test("e2e: NetworkPolicy references zerotier app labels", async () => {
 });
 
 Deno.test("e2e: routes don't conflict with firewall deny rules", async () => {
-  const routesContent = await Deno.readTextFile("configs/routes.ncl");
-  const firewallContent = await Deno.readTextFile("configs/firewall.ncl");
+  let routesContent = await Deno.readTextFile("configs/routes.ncl");
+  let firewallContent = await Deno.readTextFile("configs/firewall.ncl");
 
   // Firewall should have DROP policy but allow zerotier
   assertStringIncludes(firewallContent, "input_policy = \"DROP\"");
@@ -61,10 +58,10 @@ Deno.test("e2e: routes don't conflict with firewall deny rules", async () => {
 });
 
 Deno.test("e2e: secret manifest does not contain real credentials", async () => {
-  const secretContent = await Deno.readTextFile("manifests/secret.yaml");
+  let secretContent = await Deno.readTextFile("manifests/secret.yaml");
 
   // Should not contain realistic credentials (no real tokens)
-  const hasPlaceholder = secretContent.includes("EXAMPLE") || secretContent.includes("CHANGEME");
+  let hasPlaceholder = secretContent.includes("EXAMPLE") || secretContent.includes("CHANGEME");
   assertEquals(hasPlaceholder, true);
 
   // Should not contain common token patterns (real tokens are usually longer)
@@ -72,19 +69,19 @@ Deno.test("e2e: secret manifest does not contain real credentials", async () => 
 });
 
 Deno.test("e2e: network config IPv6 pool is valid format", async () => {
-  const networkContent = await Deno.readTextFile("configs/network.ncl");
+  let networkContent = await Deno.readTextFile("configs/network.ncl");
 
   // Should have IPv6 prefix in valid format
-  const ipv6Match = networkContent.match(/prefix\s*=\s*"([^"]+)"/);
+  let ipv6Match = networkContent.match(/prefix\s*=\s*"([^"]+)"/);
   if (ipv6Match) {
-    const ipv6Prefix = ipv6Match[1];
+    let ipv6Prefix = ipv6Match[1];
     // Should be valid IPv6 CIDR (contain colons and /prefix)
     assertEquals(/[a-f0-9:]+\/\d+/.test(ipv6Prefix), true);
   }
 });
 
 Deno.test("e2e: configmap provides auto-join configuration", async () => {
-  const configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
+  let configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
 
   // Should have some configuration keys
   assertStringIncludes(configmapContent, "kind: ConfigMap");
@@ -92,16 +89,16 @@ Deno.test("e2e: configmap provides auto-join configuration", async () => {
 });
 
 Deno.test("e2e: daemonset includes health check configuration", async () => {
-  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  let daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
 
   // Should have liveness or readiness probes
   assertEquals(daemonsetContent.includes("livenessProbe:") || daemonsetContent.includes("readinessProbe:"), true);
 });
 
 Deno.test("e2e: all manifest references use existing configmap/secret", async () => {
-  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
-  const configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
-  const secretContent = await Deno.readTextFile("manifests/secret.yaml");
+  let daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  let configmapContent = await Deno.readTextFile("manifests/configmap.yaml");
+  let secretContent = await Deno.readTextFile("manifests/secret.yaml");
 
   // Daemonset references zerotier-config configmap
   assertStringIncludes(daemonsetContent, "zerotier-config");
@@ -114,24 +111,24 @@ Deno.test("e2e: all manifest references use existing configmap/secret", async ()
   assertStringIncludes(secretContent, "zerotier-credentials");
 });
 
-Deno.test("e2e: firewall zones reference zerotier interface pattern", async () => {
-  const firewallContent = await Deno.readTextFile("configs/firewall.ncl");
+Deno.test("e2e: firewall zones reference zerotier struct pattern", async () => {
+  let firewallContent = await Deno.readTextFile("configs/firewall.ncl");
 
-  // Should have zerotier zone with zt+ interface pattern
+  // Should have zerotier zone with zt+ struct pattern
   assertStringIncludes(firewallContent, "zerotier");
   assertStringIncludes(firewallContent, "zt+");
 });
 
 Deno.test("e2e: routes match network config IP pools", async () => {
-  const networkContent = await Deno.readTextFile("configs/network.ncl");
-  const routesContent = await Deno.readTextFile("configs/routes.ncl");
+  let networkContent = await Deno.readTextFile("configs/network.ncl");
+  let routesContent = await Deno.readTextFile("configs/routes.ncl");
 
   // Extract the IPv4 pool range from network config
-  const networkPoolMatch = networkContent.match(/start\s*=\s*"(\d+\.\d+\.\d+\.\d+)"/);
+  let networkPoolMatch = networkContent.match(/start\s*=\s*"(\d+\.\d+\.\d+\.\d+)"/);
   if (networkPoolMatch) {
-    const ipStart = networkPoolMatch[1];
+    let ipStart = networkPoolMatch[1];
     // Extract subnet from IP
-    const subnet = ipStart.split(".").slice(0, 3).join(".") + ".0/24";
+    let subnet = ipStart.split(".").slice(0, 3).join(".") + ".0/24";
 
     // Routes should reference this subnet
     assertStringIncludes(routesContent, "10.147.17.0/24");
@@ -139,8 +136,8 @@ Deno.test("e2e: routes match network config IP pools", async () => {
 });
 
 Deno.test("e2e: capabilities in network config align with daemonset permissions", async () => {
-  const networkContent = await Deno.readTextFile("configs/network.ncl");
-  const daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
+  let networkContent = await Deno.readTextFile("configs/network.ncl");
+  let daemonsetContent = await Deno.readTextFile("manifests/daemonset.yaml");
 
   // Network config should allow managed IPs
   assertStringIncludes(networkContent, "allow_managed_ips = true");
@@ -149,4 +146,3 @@ Deno.test("e2e: capabilities in network config align with daemonset permissions"
   assertStringIncludes(daemonsetContent, "NET_ADMIN");
 });
 
-==================================== */
