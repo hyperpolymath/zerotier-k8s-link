@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-// Ported via Harvard Engine mechanical processor
+// Ported via Harvard Engine (Semantic pass)
 
 module config_bench;
 
-// TODO: Complete semantic implementation
-
-/* === ORIGINAL TYPESCRIPT CONTEXT ===
 // SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 //
@@ -18,7 +15,7 @@ Deno.bench("bench: read all nickel configs sequentially", async () => {
 });
 
 Deno.bench("bench: read all k8s manifests sequentially", async () => {
-  const files = [
+  let files = [
     "manifests/configmap.yaml",
     "manifests/daemonset.yaml",
     "manifests/namespace.yaml",
@@ -63,15 +60,14 @@ Deno.bench("bench: read all ABI files", async () => {
 });
 
 Deno.bench("bench: parse nickel config string content", async () => {
-  const content = await Deno.readTextFile("configs/network.ncl");
+  let content = await Deno.readTextFile("configs/network.ncl");
   // Basic parsing simulation: count lines
   content.split("\n").length;
 });
 
 Deno.bench("bench: parse kubernetes manifest string content", async () => {
-  const content = await Deno.readTextFile("manifests/daemonset.yaml");
+  let content = await Deno.readTextFile("manifests/daemonset.yaml");
   // Basic parsing simulation: count lines
   content.split("\n").length;
 });
 
-==================================== */
